@@ -143,7 +143,7 @@ namespace MySqlCall {
             return $queryies;
         }
 
-        private function mysqli_exec($sql, $type, &$error_code, &$error_text) {
+        private function mysqli_exec($sql, $type, &$error_code, &$error_text) {            
             $s = "";
             $j = 0;
             for ($i = 0; $i < strlen($sql); $i++) {
@@ -159,15 +159,15 @@ namespace MySqlCall {
             $this->lastSQL = $s;
             //echo $this->lastSQL;
 
-            $query = mysqli_query($this->link, $this->lastSQL);
-            if ($query instanceof mysqli_result) {
+            $query = mysqli_query($this->link, $this->lastSQL);           
+            if ($query instanceof \mysqli_result) {                
                 if (mysqli_num_rows($query) < 0) {
                     return null;
                 }
-                mysqli_data_seek($query, 0);
+                mysqli_data_seek($query, 0);                
                 if ($type == "array") {
                     $arr = array();
-                    while ($row = mysql_fetch_assoc_array($query)) {
+                    while ($row = mysqli_fetch_assoc($query)) {
                         array_push($arr, $row);
                     }
                     return $arr;
@@ -193,7 +193,7 @@ namespace MySqlCall {
             }
         }
 
-        public function exec($sql, $type = "orginal", &$error = null, &$code = 0) {
+        public function exec($sql, $type = "orginal") {
             $error_code = $error_text = null;
 
             $r = $this->mysqli_exec($sql, $type, $error_code, $error_text);
@@ -204,9 +204,7 @@ namespace MySqlCall {
             if ((is_null($error_code)) && (is_null($error_text))) {
                 return $r;
             } else {
-                $code = $error_code;
-                $error = $error_text;
-                return null;
+                throw new MySqlCallException($error_text, $error_code, $this->lastSQL);
             }
         }
 
