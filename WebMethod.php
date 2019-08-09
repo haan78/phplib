@@ -110,14 +110,13 @@ namespace WebMethod {
             $params = $args;
         }
 
-        private function getParamValue($params, $name, $ind) {
-            $v = null;
+        private function getParamValue($params, $name, $ind,$defv) {            
             if (isset($params[$name])) {
                 $v = (is_string($params[$name]) ? $this->renderStringParam($name, $params[$name]) : $params[$name]);
             } elseif (isset($params[$ind])) {
                 $v = (is_string($params[$ind]) ? $this->renderStringParam($name, $params[$ind]) : $params[$ind]);
             } else {
-                
+                $v = $defv;
             }
             return $v;
         }
@@ -132,12 +131,13 @@ namespace WebMethod {
                         $out_indexes = array();
                         for ($i = 0; $i < count($refParams); $i++) {
                             $pname = $refParams[$i]->getName();
+                            $defv = ($refParams[$i]->isDefaultValueAvailable() ? $refParams[$i]->getDefaultValue() : null );
                             if (!$refParams[$i]->canBePassedByValue()) {
-                                $pl[] = $this->getParamValue($params, $pname, $i);
+                                $pl[] = $this->getParamValue($params, $pname, $i,$defv);
                                 $pl[$i] = &$pl[$i];
                                 $out_indexes[] = $i;
                             } else {
-                                $pl[] = $this->getParamValue($params, $pname, $i);
+                                $pl[] = $this->getParamValue($params, $pname, $i,$defv);
                             }
                         }
                         
