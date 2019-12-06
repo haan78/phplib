@@ -11,12 +11,17 @@ namespace MySqlTool {
         private $params;
         private $link;
         private $lastSQL;
+        private $parser = [];
         public $setEmptyStringsToNull = true;
         public $autoClose = true;
 
         public function __construct(\mysqli $link) {
             $this->link = $link;
             $this->params = array();
+        }
+
+        public function setParser($field, callable $fnc) {
+            $this->parser[$field] = $fnc;
         }
 
         public function in($value, $quotes = true) {
@@ -110,8 +115,11 @@ namespace MySqlTool {
 
             while (true == true) {
                 $r = mysqli_store_result($this->link);
+
                 if ($r instanceof \mysqli_result) {
-                    array_push($queryies, $r);
+                    /*$fields = \mysqli_fetch_fields($r);
+                    print_r($fields);*/
+                    array_push($queryies, $r);                    
                 } elseif (mysqli_errno($this->link) != 0) {
                     $error_code = mysqli_errno($this->link);
                     $error_text = mysqli_error($this->link);
@@ -214,7 +222,15 @@ namespace MySqlTool {
                     $outs = mysqli_fetch_assoc($queryies[$i]);
                 } else {
                     while ($row = mysqli_fetch_assoc($queryies[$i])) {
-                        array_push($q, $row);
+                        $row2 = [];
+                        foreach( $row as $field => $value ) {
+                            if ( isset($this->parser[$field]) ) {
+                                $row2[$field] = $this->parser[$field]($value);
+                            } else {
+                                $row2[$field] = $value;
+                            }
+                        }
+                        array_push($q, $row2);
                     }
                     array_push($queries, $q);
                 }

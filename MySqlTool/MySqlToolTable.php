@@ -11,7 +11,7 @@ namespace MySqlTool {
         private $link;
         private $table;
         private $fields;
-        private $lastSQL;
+        public $lastSQL;
 
         public function __construct(\mysqli $link,$table)
         {
@@ -120,6 +120,34 @@ namespace MySqlTool {
             }
         }
 
+        private function sqlSelect($link, $table,$fields,$conditions,$limit) {
+            $sql = "SELECT * FROM $table WHERE 1=1";
+            if ( is_array($conditions) ) {
+                for( $i=0; $i<count($conditions); $i++ ) {
+                    $field = $conditions[$i]["field"];                
+                    if ( isset($fields[$field]) ) {
+                        $value = $this->adaptedValue($link,$conditions[$i]["value"],$fields[$field]);
+                        $operator = ( isset( $conditions[$i]["operator"] ) ? $conditions[$i]["operator"] : "=" );
+                        $condition = ( isset( $conditions[$i]["condition"] ) ? $conditions[$i]["condition"] : "AND" );
+                        $sql.= " $condition $field $operator $value";
+                    }
+                }
+            }            
+            $sql.=" LIMIT 0,$limit";
+
+            $this->lastSQL = $sql;
+            $result = mysqli_query($link,$this->lastSQL);
+            
+            if ( $result !== FALSE ) {
+                $arr = [];
+                while( $row = mysqli_fetch_assoc($result) ) {                    
+                    array_push($arr,$row);
+                }
+                return $arr;
+            } else {
+                throw new MySqlToolDatabaseException(mysqli_error($link),mysqli_errno($link),$this->lastSQL);
+            }
+        }
         public function insert($data) {
             return $this->sqlInsert($this->link,$this->table,$this->fields,$data);
         }
@@ -127,5 +155,10 @@ namespace MySqlTool {
         public function delete($data) {
             $this->sqlDelete($this->link,$this->table,$this->fields,$data);
         }
+
+        public function select($conditions = false,$limit = 1000) {
+            return $this->sqlSelect($this->link,$this->table,$this->fields,$conditions,$limit);
+        }
+
     }
 }

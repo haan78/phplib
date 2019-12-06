@@ -172,6 +172,13 @@ namespace WebMethod {
             exit();
         }
 
+        public final function printAsJson($printMode = JSON_PRETTY_PRINT) {
+            if ( !headers_sent() ) {
+                header('Content-Type: application/json;charset=utf-8;');            
+            }
+            echo json_encode( $this->asArray()  ,$printMode);
+        }
+
     }
 
 }
