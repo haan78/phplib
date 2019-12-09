@@ -8,8 +8,8 @@ namespace SQLite3Tool {
             parent::__construct($filename, $flags, $encryption_key);
 
             $this->enableExceptions(true);
-            $this->createFunction("locale", "SQLite3Ex::Locale");
-            $this->createFunction("rownum", "SQLite3Ex::Rownum");
+            $this->createFunction("locale", "SQLite3Tool\SQLite3Ex::Locale");
+            $this->createFunction("rownum", "SQLite3Tool\SQLite3Ex::Rownum");
         }
 
         public function queryAsArray(string $sql, $arrayType = SQLITE3_ASSOC) {
@@ -21,7 +21,7 @@ namespace SQLite3Tool {
             return $data;
         }
 
-        public static function resultToArray(SQLite3Result $result, $arrayType = SQLITE3_ASSOC) {
+        public static function resultToArray(\SQLite3Result $result, $arrayType = SQLITE3_ASSOC) {
             $data = array();
             while ($r = $result->fetchArray($arrayType)) {
                 array_push($data, $r);

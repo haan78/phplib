@@ -22,7 +22,7 @@ class Upload {
         $this->maximumSize = intval($size);
     }
 
-    public function save(string $name, string $target) {
+    public function save(string $name, string $target, string &$ext) {
         if (isset($_FILES[$name])) {
             $target_info = pathinfo($target);
             $source_info = pathinfo($_FILES[$name]['name']);
@@ -33,6 +33,7 @@ class Upload {
                             if (!move_uploaded_file($_FILES[$name]['tmp_name'], $target.".".$source_info['extension'])) {
                                 throw new \Exception($_FILES[$name]["error"]);
                             }
+                            $ext = $source_info['extension'];
                         } else {
                             throw new \Exception("Folder is not writable");
                         }
@@ -52,9 +53,10 @@ class Upload {
     
     public static function jpg($name,$folder) {
         $up = new Upload(['jpg','jpeg']);
-        $file = uniqid(true);
-        $up->save($name,"$folder/$file");
-        return $file;
+        $file = uniqid();
+        $ext = "";
+        $up->save($name,"$folder/$file",$ext);
+        return "$file.$ext";
     }
 
 }
