@@ -11,6 +11,9 @@ namespace MySqlTool {
         private $params;
         private $link;
         private $lastSQL;
+        private $outs;
+        private $lists;
+        private $procedure;
         private $parser = [];
         public $setEmptyStringsToNull = true;
         public $autoClose = true;
@@ -18,6 +21,29 @@ namespace MySqlTool {
         public function __construct(\mysqli $link) {
             $this->link = $link;
             $this->params = array();
+        }
+        
+        public function porocedure($name) {
+            $this->procedure = $name;
+            return $this;
+        }
+        
+        public function result($key) {
+            if (is_string($key)) {
+                if (is_array($this->outs) && (isset($this->outs[$key])) ) {
+                    return $this->outs[$key];
+                } else {
+                    MySqlToolMethodException("There is no such kind an out like '$key'",1003,__METHOD__);
+                }
+            } elseif ( is_int($key) ) {
+                if (is_array($this->lists) && (isset($this->outs[$key])) ) {
+                    return $this->lists[$key];
+                } else {
+                    MySqlToolMethodException("There is no such kinda query like '$key'",1002,__METHOD__);
+                }
+            } else {
+                MySqlToolMethodException("Result parameter must be a string for outs or integer for queries",1001,__METHOD__);
+            }
         }
 
         public function setParser($field, callable $fnc) {
@@ -105,7 +131,7 @@ namespace MySqlTool {
 
         public function mysqli_call($procedure, &$error_code, &$error_text, &$isThereOut) {
 
-            $queryies = [];
+            $queries = [];
 
             if (!mysqli_multi_query($this->link, $this->generateSQL($procedure, $isThereOut))) {                
                 $error_code = mysqli_errno($this->link);
@@ -119,7 +145,7 @@ namespace MySqlTool {
                 if ($r instanceof \mysqli_result) {
                     /*$fields = \mysqli_fetch_fields($r);
                     print_r($fields);*/
-                    array_push($queryies, $r);                    
+                    array_push($queries, $r);                    
                 } elseif (mysqli_errno($this->link) != 0) {
                     $error_code = mysqli_errno($this->link);
                     $error_text = mysqli_error($this->link);
@@ -133,7 +159,7 @@ namespace MySqlTool {
                     break;
                 }
             }
-            return $queryies;
+            return $queries;
         }
 
         private function mysqli_exec($sql, $type, &$error_code, &$error_text) {            
@@ -201,27 +227,26 @@ namespace MySqlTool {
             }
         }
 
-        public function call($procedure, &$outs, &$queries) {
+        public function call() {
             $error_code = $error_text = null;
             $isThereOut = false;
-            $queryies = $this->mysqli_call($procedure, $error_code, $error_text, $isThereOut);
+            $queries = $this->mysqli_call($this->procedure, $error_code, $error_text, $isThereOut);
 
 
-            if ($queryies === false) {
+            if ($queries === false) {
                 if ($this->autoClose) mysqli_close($this->link);
                 throw new MySqlToolDatabaseException($error_text, $error_code, $this->lastSQL);
             }
 
             $this->params = array();
-            $outs = [];
-            $queries = [];
-            for ($i = 0; $i < count($queryies); $i++) {
-                $q = [];
-                mysqli_data_seek($queryies[$i], 0);
-                if (($i == count($queryies) - 1) && ($isThereOut)) {
-                    $outs = mysqli_fetch_assoc($queryies[$i]);
+            $this->lists = [];            
+            for ($i = 0; $i < count($queries); $i++) {
+                $list = [];
+                mysqli_data_seek($queries[$i], 0);
+                if (($i == count($queries) - 1) && ($isThereOut)) {
+                    $this->outs = mysqli_fetch_assoc($queries[$i]);
                 } else {
-                    while ($row = mysqli_fetch_assoc($queryies[$i])) {
+                    while ($row = mysqli_fetch_assoc($queries[$i])) {
                         $row2 = [];
                         foreach( $row as $field => $value ) {
                             if ( isset($this->parser[$field]) ) {
@@ -230,11 +255,11 @@ namespace MySqlTool {
                                 $row2[$field] = $value;
                             }
                         }
-                        array_push($q, $row2);
+                        array_push($list, $row2);
                     }
-                    array_push($queries, $q);
+                    array_push($this->lists, $list);
                 }
-                mysqli_free_result($queryies[$i]);
+                mysqli_free_result($queries[$i]);
             }
 
             if ($this->autoClose) mysqli_close($this->link);

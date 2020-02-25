@@ -11,7 +11,7 @@ class JsPage {
         if (file_exists($file)) {
             echo file_get_contents($file);
             $json = json_encode($data);
-            echo "localStorage.setItem('BACKEND',$json);";                                    
+            echo "sessionStorage.setItem('BACKEND',$json);";                                    
             echo "document.querySelector('[ data-role = __LOADING__ ]').remove();";
         } else {
             echo "Javascript file not found / $file";
