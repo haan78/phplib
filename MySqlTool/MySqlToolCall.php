@@ -54,7 +54,7 @@ namespace MySqlTool {
             } elseif ($type == "bool") {
                 return ($value == "1" ? true : false);
             } elseif ($type == "int") {
-                return intval(trim($value));
+                return intval($value);
             } elseif ($type=="float") {
                 return floatval($value);
             } else {
