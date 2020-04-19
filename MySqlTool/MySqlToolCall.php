@@ -62,26 +62,15 @@ namespace MySqlTool {
             }
         }
 
-        public function get($path,$type="string") {
-            $arr = explode(".", $path);
+        public function get($path,$type="string") {            
+            $arr = explode(">", str_replace(["[",".","]"], [">",">",""], $path) );
+            //var_dump($arr);
             $d = $this->result;
             for ($i = 0; $i < count($arr); $i++) {
                 $oname = trim($arr[$i]);
-                $res = null;
-                if (preg_match("/([a-zA-Z0-9_]+)\[([0-9]+)\]/", $oname, $res)) {
-                    if (isset($d[$res[1]])) {
-                        $d = $d[$res[1]];
-                        if (isset($d[$res[2]])) {
-                            $d = $d[$res[2]];
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        return null;
-                    }
-                } elseif (isset($d[$oname])) {
+                if (isset($d[$oname])) {
                     $d = $d[$oname];
-                } else {
+                } else {                    
                     return null;
                 }
             }
@@ -307,7 +296,7 @@ namespace MySqlTool {
             
             $this->result = [
                 "outs" => $outs,
-                "queries" => $list
+                "queries" => $lists
             ];
 
             if ($this->autoClose) mysqli_close($this->link);
