@@ -5,16 +5,16 @@ namespace MySqlTool {
     require_once __DIR__ . "/MySqlToolExeption.php";
 
     use MySqlTool\MySqlToolDatabaseException;
+    use MySqlTool\MySqlToolMethodException;
 
     class MySqlToolCall {
 
         private $params;
         private $link;
         private $lastSQL;
-        private $outs;
-        private $lists;
         private $procedure;
         private $parser = [];
+        private $result = null;
         public $setEmptyStringsToNull = true;
         public $autoClose = true;
 
@@ -23,7 +23,7 @@ namespace MySqlTool {
             $this->params = array();
         }
         
-        public function porocedure($name) {
+        public function procedure($name) {
             $this->procedure = $name;
             return $this;
         }
@@ -33,17 +33,59 @@ namespace MySqlTool {
                 if (is_array($this->outs) && (isset($this->outs[$key])) ) {
                     return $this->outs[$key];
                 } else {
-                    MySqlToolMethodException("There is no such kind an out like '$key'",1003,__METHOD__);
+                    throw new MySqlToolMethodException("There is no such kind an out like '$key'",1003,__METHOD__);
                 }
             } elseif ( is_int($key) ) {
-                if (is_array($this->lists) && (isset($this->outs[$key])) ) {
+                if (is_array($this->lists) && (isset($this->lists[$key])) ) {
                     return $this->lists[$key];
                 } else {
-                    MySqlToolMethodException("There is no such kinda query like '$key'",1002,__METHOD__);
+                    throw new MySqlToolMethodException("There is no such kinda query like '$key'",1002,__METHOD__);
                 }
             } else {
-                MySqlToolMethodException("Result parameter must be a string for outs or integer for queries",1001,__METHOD__);
+                throw new MySqlToolMethodException("Result parameter must be a string for outs or integer for queries",1001,__METHOD__);
             }
+        }
+        
+        private function cast($value,$type) {
+            if ($type=="json") {
+                return json_decode($value, true);
+            } elseif ($type == "time") {
+                return strtotime($value);
+            } elseif ($type == "bool") {
+                return ($value == "1" ? true : false);
+            } elseif ($type == "int") {
+                return intval(trim($value));
+            } elseif ($type=="float") {
+                return floatval($value);
+            } else {
+                return $value;
+            }
+        }
+
+        public function get($path,$type="string") {
+            $arr = explode(".", $path);
+            $d = $this->result;
+            for ($i = 0; $i < count($arr); $i++) {
+                $oname = trim($arr[$i]);
+                $res = null;
+                if (preg_match("/([a-zA-Z0-9_]+)\[([0-9]+)\]/", $oname, $res)) {
+                    if (isset($d[$res[1]])) {
+                        $d = $d[$res[1]];
+                        if (isset($d[$res[2]])) {
+                            $d = $d[$res[2]];
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        return null;
+                    }
+                } elseif (isset($d[$oname])) {
+                    $d = $d[$oname];
+                } else {
+                    return null;
+                }
+            }
+            return $this->cast($d, $type);            
         }
 
         public function setParser($field, callable $fnc) {
@@ -239,12 +281,13 @@ namespace MySqlTool {
             }
 
             $this->params = array();
-            $this->lists = [];            
+            $lists = [];
+            $outs = [];
             for ($i = 0; $i < count($queries); $i++) {
                 $list = [];
                 mysqli_data_seek($queries[$i], 0);
                 if (($i == count($queries) - 1) && ($isThereOut)) {
-                    $this->outs = mysqli_fetch_assoc($queries[$i]);
+                    $outs = mysqli_fetch_assoc($queries[$i]);
                 } else {
                     while ($row = mysqli_fetch_assoc($queries[$i])) {
                         $row2 = [];
@@ -257,12 +300,18 @@ namespace MySqlTool {
                         }
                         array_push($list, $row2);
                     }
-                    array_push($this->lists, $list);
+                    array_push($lists, $list);
                 }
                 mysqli_free_result($queries[$i]);
             }
+            
+            $this->result = [
+                "outs" => $outs,
+                "queries" => $list
+            ];
 
             if ($this->autoClose) mysqli_close($this->link);
+            return $this;
         }
 
     }
