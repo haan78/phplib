@@ -52,7 +52,7 @@ namespace MySqlTool {
             } elseif ($type == "time") {
                 return strtotime($value);
             } elseif ($type == "bool") {
-                return ($value == "1" ? true : false);
+                return ( trim($value) == "1" ? true : false);
             } elseif ($type == "int") {
                 return intval($value);
             } elseif ($type=="float") {
