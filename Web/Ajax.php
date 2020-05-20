@@ -14,6 +14,7 @@ namespace Web {
         public function __toString() {
             return __CLASS__ . ": [{$this->code}]: {$this->message} / $this->method";
         }
+
     }
 
     abstract class Ajax {
@@ -28,10 +29,6 @@ namespace Web {
 
         abstract protected function generateParam(string $name, string $command);
 
-        protected function methodAuthorization($method, $params): bool {
-            return true;
-        }
-
         public function __construct(string $methodName = null, array $methodParams = null) {
 
             $this->methodResult = null;
@@ -39,21 +36,21 @@ namespace Web {
             $time_start = microtime(true);
             try {
                 if (is_null($methodName)) {
-                    $this->getRequest($this->methodName, $this->methodParams,false);
-                } elseif (is_null($methodParams) ) {
+                    $this->getRequest($this->methodName, $this->methodParams, false);
+                } elseif (is_null($methodParams)) {
                     $this->methodName = $methodName;
-                    $this->getRequest($this->methodName, $this->methodParams,true);                    
+                    $this->getRequest($this->methodName, $this->methodParams, true);
                 } else {
                     $this->methodName = $methodName;
-                    $this->methodParams = $methodParams;                    
+                    $this->methodParams = $methodParams;
                 }
                 $this->runMethod($this->methodName, $this->methodParams, $this->methodResult, $this->methodOutParams);
-            } catch (\Exception  $ex) {
+            } catch (\Exception $ex) {
                 $this->methodException = [
-                    "code"=>$ex->getCode(),
-                    "message"=>$ex->getMessage(),
-                    "file"=>$ex->getFile(),
-                    "line"=>$ex->getLine()
+                    "code" => $ex->getCode(),
+                    "message" => $ex->getMessage(),
+                    "file" => $ex->getFile(),
+                    "line" => $ex->getLine()
                 ];
             }
             $this->methodDuration = microtime(true) - $time_start;
@@ -112,7 +109,7 @@ namespace Web {
             $params = $args;
         }
 
-        private function getParamValue($params, $name, $ind,$defv) {            
+        private function getParamValue($params, $name, $ind, $defv) {
             if (isset($params[$name])) {
                 $v = (is_string($params[$name]) ? $this->renderStringParam($name, $params[$name]) : $params[$name]);
             } elseif (isset($params[$ind])) {
@@ -126,33 +123,29 @@ namespace Web {
         private function runMethod($method, $params, &$result, &$outs) {
             if (method_exists($this, $method)) {
                 $rfm = new \ReflectionMethod($this, $method);
-                if (($rfm->isPublic()) && (!$rfm->isConstructor()) && (!$rfm->isDestructor()) && (!$rfm->isStatic()) && (!$rfm->isFinal()) ) {
-                    if ($this->methodAuthorization($this->methodName, $this->methodParams)) {
-                        $refParams = $rfm->getParameters();
-                        $pl = array();
-                        $out_indexes = array();
-                        for ($i = 0; $i < count($refParams); $i++) {
-                            $pname = $refParams[$i]->getName();
-                            $defv = ($refParams[$i]->isDefaultValueAvailable() ? $refParams[$i]->getDefaultValue() : null );
-                            if (!$refParams[$i]->canBePassedByValue()) {
-                                $pl[] = $this->getParamValue($params, $pname, $i,$defv);
-                                $pl[$i] = &$pl[$i];
-                                $out_indexes[] = $i;
-                            } else {
-                                $pl[] = $this->getParamValue($params, $pname, $i,$defv);
-                            }
+                if (($rfm->isPublic()) && (!$rfm->isConstructor()) && (!$rfm->isDestructor()) && (!$rfm->isStatic()) && (!$rfm->isFinal())) {
+                    $refParams = $rfm->getParameters();
+                    $pl = array();
+                    $out_indexes = array();
+                    for ($i = 0; $i < count($refParams); $i++) {
+                        $pname = $refParams[$i]->getName();
+                        $defv = ($refParams[$i]->isDefaultValueAvailable() ? $refParams[$i]->getDefaultValue() : null );
+                        if (!$refParams[$i]->canBePassedByValue()) {
+                            $pl[] = $this->getParamValue($params, $pname, $i, $defv);
+                            $pl[$i] = &$pl[$i];
+                            $out_indexes[] = $i;
+                        } else {
+                            $pl[] = $this->getParamValue($params, $pname, $i, $defv);
                         }
-                        
-                        $result = $rfm->invokeArgs($this, $pl);
-                        $outs = array();
-                        //print_r($out_indexes); print_r($pl);
-                        for ($i = 0; $i < count($out_indexes); $i++) {
-                            $ind = $out_indexes[$i];
-                            $refParams[$ind]->getName();
-                            $outs[$refParams[$ind]->getName()] = $pl[$ind];
-                        }
-                    } else {
-                        throw new WebAjaxException(__METHOD__, "Method $method request has not been authorised", 2003);
+                    }
+
+                    $result = $rfm->invokeArgs($this, $pl);
+                    $outs = array();
+                    //print_r($out_indexes); print_r($pl);
+                    for ($i = 0; $i < count($out_indexes); $i++) {
+                        $ind = $out_indexes[$i];
+                        $refParams[$ind]->getName();
+                        $outs[$refParams[$ind]->getName()] = $pl[$ind];
                     }
                 } else {
                     throw new WebAjaxException(__METHOD__, "Method $method is not accessible", 2002);
@@ -161,40 +154,40 @@ namespace Web {
                 throw new WebAjaxException(__METHOD__, "Method $method not found", 2001);
             }
         }
-        
-        public final function asArray() : array {
+
+        public final function asArray(): array {
             $this->lastOperationData = [
-                "methodName"=>$this->methodName,
-                "methodParams"=>$this->methodParams,
-                "methodResult"=>$this->methodResult,
-                "methodOutParams"=>$this->methodOutParams,
-                "methodDuration"=> $this->methodDuration,
-                "methodException"=> $this->methodException                
+                "methodName" => $this->methodName,
+                "methodParams" => $this->methodParams,
+                "methodResult" => $this->methodResult,
+                "methodOutParams" => $this->methodOutParams,
+                "methodDuration" => $this->methodDuration,
+                "methodException" => $this->methodException
             ];
-            
-            if (is_null($this->methodException) ) {        
+
+            if (is_null($this->methodException)) {
                 return [
-                    "success"=>true,
-                    "outputs"=>$this->methodOutParams,
-                    "result"=>$this->methodResult
+                    "success" => true,
+                    "outputs" => $this->methodOutParams,
+                    "result" => $this->methodResult
                 ];
             } else {
                 return [
-                    "success"=>false,                    
-                    "text"=>$this->methodException["message"]
+                    "success" => false,
+                    "text" => $this->methodException["message"]
                 ];
             }
         }
-        
+
         public final function getLastOperationData() {
             return $this->lastOperationData;
         }
 
         public final function printAsJson($printMode = JSON_PRETTY_PRINT) {
-            if ( !headers_sent() ) {
-                header('Content-Type: application/json;charset=utf-8;');            
+            if (!headers_sent()) {
+                header('Content-Type: application/json;charset=utf-8;');
             }
-            echo json_encode( $this->asArray()  ,$printMode);
+            echo json_encode($this->asArray(), $printMode);
         }
 
     }
