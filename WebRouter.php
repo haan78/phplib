@@ -19,15 +19,16 @@ class WebRouter {
         $duration = round(microtime(true) - $time_start, 5);
         $this->log([
             "timestamp" => $timestamp,
+            "uri"=>( isset($_SERVER) && isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : false ),
             "action"=>$action,
-            "details" => $details,
-            "router_error" => $router_error,
+            "get"=>(isset($_GET) && !empty($_GET) ? $_GET : false),
+            "post"=>(isset($_POST) && !empty($_POST) ? $_POST :false ),
+            "client"=>( isset($_SERVER) && isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false ),
+            "session"=>(isset($_SESSION) ? $_SESSION : false ),
+            "operation_details" => $details,
+            "router_error" => $router_error,          
             "duration" => $duration
         ]);
-    }
-
-    protected function routerError($error) {
-        die($error);
     }
 
     protected function log(array $data) {

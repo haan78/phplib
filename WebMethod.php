@@ -28,12 +28,13 @@ namespace WebMethod {
         protected $methodOutParams;
         protected $methodDuration = 0;
         protected $methodException = null;
+        private $lastOperationData;
 
         abstract protected function generateParam(string $name, string $command);
 
-        abstract protected function methodAuthorization($method, $params): bool;
-        
-        abstract protected function convertToArray($methodName,$methodParams,$methodResult,$methodOutParams,$methodDuration,$methodException) : array;
+        protected function methodAuthorization($method, $params): bool {
+            return true;
+        }
 
         public function __construct(string $methodName = null, array $methodParams = null) {
 
@@ -52,7 +53,12 @@ namespace WebMethod {
                 }
                 $this->runMethod($this->methodName, $this->methodParams, $this->methodResult, $this->methodOutParams);
             } catch (\Exception  $ex) {
-                $this->methodException = $ex;
+                $this->methodException = [
+                    "code"=>$ex->getCode(),
+                    "message"=>$ex->getMessage(),
+                    "file"=>$ex->getFile(),
+                    "line"=>$ex->getLine()                    
+                ];
             }
             $this->methodDuration = microtime(true) - $time_start;
         }
@@ -161,7 +167,31 @@ namespace WebMethod {
         }
         
         public final function asArray() : array {
-            return $this->convertToArray($this->methodName, $this->methodParams, $this->methodResult, $this->methodOutParams, $this->methodDuration, $this->methodException);
+            $this->lastOperationData = [
+                "methodName"=>$this->methodName,
+                "methodParams"=>$this->methodParams,
+                "methodResult"=>$this->methodResult,
+                "methodOutParams"=>$this->methodOutParams,
+                "methodDuration"=> $this->methodDuration,
+                "methodException"=> $this->methodException                
+            ];
+            
+            if (is_null($this->methodException) ) {        
+                return [
+                    "success"=>true,
+                    "outputs"=>$this->methodOutParams,
+                    "result"=>$this->methodResult
+                ];
+            } else {
+                return [
+                    "success"=>false,                    
+                    "text"=>$this->methodException["message"]
+                ];
+            }
+        }
+        
+        public final function getLastOperationData() {
+            return $this->lastOperationData;
         }
 
         public final function printAsJsonAndExit($printMode = JSON_PRETTY_PRINT) {
