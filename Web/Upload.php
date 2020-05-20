@@ -1,6 +1,20 @@
 <?php
 
 namespace Web {
+    
+    class WebUploadException extends \Exception {
+        
+        private $info;
+
+        public function __construct($info,$message, $code = 0, \Exception $previous = null) {
+            $this->info = $info;
+            parent::__construct($message, $code, $previous);
+        }
+
+        public function __toString() {
+            return __CLASS__ . ": [{$this->code}]: {$this->message} / $this->info";
+        }
+    }
 
     class Upload {
 
@@ -27,7 +41,7 @@ namespace Web {
         public function save(string $name, string $target, string &$ext) {
             if (isset($_FILES[$name])) {
                 $target_info = pathinfo($target);
-                $source_info = pathinfo($_FILES[$name]['name']);
+                $source_info = pathinfo($_FILES[$name]['name']);                
                 if ($this->isAllowed($source_info['extension'])) {
                     if ($_FILES[$name]["size"] <= $this->maximumSize) {
                         if (file_exists($target_info['dirname'])) {
@@ -37,19 +51,19 @@ namespace Web {
                                 }
                                 $ext = $source_info['extension'];
                             } else {
-                                throw new \Exception("Folder is not writable");
+                                throw new WebUploadException($target_info['dirname'],"Folder is not writable",3005);
                             }
                         } else {
-                            throw new \Exception("Folder is not exist");
+                            throw new WebUploadException($target_info['dirname'],"Folder is not exist",3004);
                         }
                     } else {
-                        throw new \Exception("File is too big");
+                        throw new WebUploadException($source_info,"File is too big",3003);
                     }
                 } else {
-                    throw new \Exception("File extension is not allowed");
+                    throw new WebUploadException($source_info,"File extension is not allowed",3002);
                 }
             } else {
-                throw new \Exception("Upload name is not in files");
+                throw new WebUploadException($name,"Upload name is not in files",3001);
             }
         }
 

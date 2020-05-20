@@ -14,10 +14,6 @@ namespace Web {
         public function __toString() {
             return __CLASS__ . ": [{$this->code}]: {$this->message} / $this->method";
         }
-
-        public function getMethod() {
-            return $this->method;
-        }
     }
 
     abstract class Ajax {
@@ -57,7 +53,7 @@ namespace Web {
                     "code"=>$ex->getCode(),
                     "message"=>$ex->getMessage(),
                     "file"=>$ex->getFile(),
-                    "line"=>$ex->getLine()                    
+                    "line"=>$ex->getLine()
                 ];
             }
             $this->methodDuration = microtime(true) - $time_start;

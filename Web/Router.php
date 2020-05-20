@@ -1,6 +1,17 @@
 <?php
 
 namespace Web {
+    
+    class WebRouterException extends \Exception {
+
+        public function __construct($message, $code = 0, \Exception $previous = null) {            
+            parent::__construct($message, $code, $previous);
+        }
+
+        public function __toString() {
+            return __CLASS__ . ": [{$this->code}]: {$this->message}";
+        }
+    }
 
     abstract class Router {
 
@@ -20,10 +31,10 @@ namespace Web {
                     if (($rfm->isPublic()) && (!$rfm->isConstructor()) && (!$rfm->isDestructor()) && (!$rfm->isStatic())) {
                         $this->result = $rfm->invokeArgs($this, []);
                     } else {
-                        throw new \Exception("Router method is not accessible");
+                        throw new WebRouterException("Router method is not accessible",1002);
                     }
                 } else {
-                    throw new \Exception("Router method not found");
+                    throw new WebRouterException("Router method not found",1001);
                 }
             } catch (\Exception $ex) {
                 $this->doError($ex);
