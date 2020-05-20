@@ -1,8 +1,8 @@
 <?php
 
-namespace WebMethod {
+namespace Web {
 
-    class WebMethodException extends \Exception {
+    class WebAjaxException extends \Exception {
 
         private $method;
 
@@ -20,7 +20,7 @@ namespace WebMethod {
         }
     }
 
-    abstract class WebMethod {
+    abstract class Ajax {
 
         protected $methodName;
         protected $methodParams;
@@ -109,7 +109,7 @@ namespace WebMethod {
                     $name = trim((string) $args[0]);
                     array_shift($args);
                 } else {
-                    throw new WebMethodException(__METHOD__, "Method is not declared", 1001);
+                    throw new WebAjaxException(__METHOD__, "Method is not declared", 1001);
                 }
             }
 
@@ -156,13 +156,13 @@ namespace WebMethod {
                             $outs[$refParams[$ind]->getName()] = $pl[$ind];
                         }
                     } else {
-                        throw new WebMethodException(__METHOD__, "Method $method request has not been authorised", 2003);
+                        throw new WebAjaxException(__METHOD__, "Method $method request has not been authorised", 2003);
                     }
                 } else {
-                    throw new WebMethodException(__METHOD__, "Method $method is not accessible", 2002);
+                    throw new WebAjaxException(__METHOD__, "Method $method is not accessible", 2002);
                 }
             } else {
-                throw new WebMethodException(__METHOD__, "Method $method not found", 2001);
+                throw new WebAjaxException(__METHOD__, "Method $method not found", 2001);
             }
         }
         
@@ -192,14 +192,6 @@ namespace WebMethod {
         
         public final function getLastOperationData() {
             return $this->lastOperationData;
-        }
-
-        public final function printAsJsonAndExit($printMode = JSON_PRETTY_PRINT) {
-            if ( !headers_sent() ) {
-                header('Content-Type: application/json;charset=utf-8;');            
-            }
-            echo json_encode( $this->asArray()  ,$printMode);
-            exit();
         }
 
         public final function printAsJson($printMode = JSON_PRETTY_PRINT) {
