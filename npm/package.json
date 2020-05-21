@@ -1,0 +1,41 @@
+{
+  "name": "app-temp",
+  "version": "2.0.0",
+  "description": "PHP Template Application With Webpack",
+  "main": "index.php",
+  "scripts": {
+    "dev": "webpack --watch -d --mode development",
+    "build": "webpack -d --mode development",
+    "serve": "docker-compose up"
+  },
+  "author": "Ali Barış Öztürk",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "babel-eslint": "^10.0.3",
+    "babel-loader": "^8.0.6",
+    "copy-webpack-plugin": "^5.0.4",
+    "eslint-loader": "^3.0.2",
+    "eslint-plugin-vue": "^5.2.3",
+    "vue-loader": "^15.7.2",
+    "vue-template-compiler": "^2.6.10",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "css-loader": "^3.2.0",
+    "eslint": "^5.16.0",
+    "file-loader": "^4.3.0",
+    "image-webpack-loader": "^6.0.0",
+    "line-awesome": "^1.3.0",
+    "mobile-detect": "^1.4.4",
+    "style-loader": "^1.0.0",
+    "url-loader": "^2.2.0",
+    "vue": "^2.6.10",
+    "vue-router": "^3.1.3",
+    "vue-style-loader": "^4.1.2",
+    "vue-svg-charts": "0.0.6"
+  }
+}
