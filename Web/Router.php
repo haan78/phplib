@@ -13,23 +13,32 @@ namespace Web {
         }
     }
 
-    abstract class Router {
+    class RouterActionInfo {
+        public $name;
+        public $time;
+        public $authentication;
+        public $result;
+        public $errorDetails;
+        public $duration;
+    }
 
-        protected $action;
-        protected $error;
-        protected $duration;
-        protected $result;
-        protected $timestamp;
+    abstract class Router {
 
         public function __construct($action) {
             $time_start = microtime(true);
-            $this->timestamp = date("c");
-
+            $rai = new RouterActionInfo();
+            $rai->name = $action;
+            $rai->time = date("c");
             try {
                 if (method_exists($this, $action)) {
                     $rfm = new \ReflectionMethod($this, $action);
                     if (($rfm->isPublic()) && (!$rfm->isConstructor()) && (!$rfm->isDestructor()) && (!$rfm->isStatic())) {
-                        $this->result = $rfm->invokeArgs($this, []);
+                        if ( $this->auth($action) ) {
+                            $rai->authentication = true;
+                            $rai->result = $rfm->invokeArgs($this, []);
+                        } else {
+                            $rai->authentication = false;
+                        }
                     } else {
                         throw new WebRouterException("Router method is not accessible",1002);
                     }
@@ -37,16 +46,23 @@ namespace Web {
                     throw new WebRouterException("Router method not found",1001);
                 }
             } catch (\Exception $ex) {
+                $rai->errorDetails = [
+                    "code" => $ex->getCode(),
+                    "message" => $ex->getMessage(),
+                    "file" => $ex->getFile(),
+                    "line" => $ex->getLine()
+                ];
                 $this->doError($ex);
             }
 
 
-            $this->duration = round(microtime(true) - $time_start, 5);
-            $this->log();
+            $rai->duration = round(microtime(true) - $time_start, 5);
+            $this->log($rai);
         }
 
-        abstract protected function log();
+        abstract protected function log(RouterActionInfo $rai);
         abstract protected function doError(\Exception $ex);
+        abstract protected function auth($action) : bool;
 
     }
 
